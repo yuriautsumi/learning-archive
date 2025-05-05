@@ -1,0 +1,129 @@
+---
+title: "mcmc-sampling"
+output: html_document
+date: "2025-05-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Metropolis Hastings demo
+
+-type of MCMC method to obtain random (correlated) samples, often for high-dimensional distribution
+
+-markov chain=sample t+1 depends on sample t, markov process asymptotically reaches stationary distribution; monte carlo=random
+
+-for conjugate distribution,posterior and prior=same distribution. compute parameters for posterior.
+
+-for posterior, when it is not analytically solvable, construct markov chain to do monte carlo approximation
+
+-other MCMC: Gibbs (conditional), HMC (efficient steps)
+
+Note: Code was generated with the help of GPT-4o.
+
+Source: <https://github.com/twiecki/WhileMyMCMCGentlySamples/blob/master/content/downloads/notebooks/MCMC-sampling-for-dummies.ipynb>
+
+```{r cars}
+summary(cars)
+```
+
+```{r}
+# Load necessary libraries
+library(ggplot2)
+
+# Function to plot prior distribution, histogram, and mu lines
+plot_distribution <- function(data, mu_current, mu_proposal, mu_prior, std_prior, mu_true=NULL) {
+  # Create a sequence of x values for the prior distribution
+  x <- seq(min(data) - 3, max(data) + 3, length.out = 100)
+  
+  # Calculate the prior PDF
+  prior_pdf <- dnorm(x, mean = mu_prior, sd = std_prior)
+  
+  # Create a data frame for plotting
+  plot_data <- data.frame(x = x, prior_pdf = prior_pdf)
+  
+  # Create the histogram of the data
+  hist_data <- data.frame(data = data)
+  
+  # Plot
+  result<-ggplot() +
+    geom_histogram(data = hist_data, aes(x = data, y = ..density..), 
+                   binwidth = 0.5, fill = "grey", alpha = 0.5) +                # data distribution
+    geom_line(data = plot_data, aes(x = x, y = prior_pdf), color = "black") +   # prior distribution
+    geom_vline(xintercept = mu_current, color = "blue", linetype = "dashed", size = 1) +    # current mu
+    geom_vline(xintercept = mu_proposal, color = "green", linetype = "dashed", size = 1) + # proposed mu
+    annotate("text", x = mu_current, y = max(prior_pdf) * 0.85, label = "Current mu", color = "blue", vjust = -1) +
+    annotate("text", x = mu_proposal, y = max(prior_pdf) * 0.85, label = "Proposed mu", color = "green", vjust = -1) +
+    geom_segment(aes(x = mu_current, xend = mu_proposal, y = 0, yend = 0), 
+                 arrow = arrow(type = "closed", length = unit(0.2, "inches")), 
+                 color = "black") +
+    labs(title = "Prior Distribution and Data Histogram",
+         x = "Value",
+         y = "Density") +
+    theme_minimal()
+  if (!is.null(mu_true)) {
+    result <- result + 
+      geom_vline(xintercept = mu_true, color = "red", linetype = "dashed", size = 1) +
+      annotate("text", x = mu_true, y = max(prior_pdf) * 0.85, label = "True mu", color = "red", vjust = -1)
+  }
+  result
+}
+
+```
+
+```{r}
+sampler <- function(data, samples = 4, mu_init = .5, proposal_width = .5, plot = FALSE, mu_prior_mu = 0, mu_prior_sd = 1., mu_true=NULL) {
+  mu_current <- mu_init
+  posterior <- list()
+  
+  for (i in seq(from = 1, to = samples)) {
+    # proposed mean, proposal width=jump width
+    mu_proposal <- rnorm(1, mean=mu_current, sd=proposal_width)
+    
+    # compute data likelihoods (assume iid)
+    likelihood_current <- prod(dnorm(data, mean = mu_current, sd = 1))
+    likelihood_proposal <- prod(dnorm(data, mean = mu_proposal, sd = 1))
+    
+    # compute prior probability of current and proposed mu (from prior distribution)
+    prior_current <- dnorm(mu_current, mean = mu_prior_mu, sd = mu_prior_sd)
+    prior_proposal <- dnorm(mu_proposal, mean = mu_prior_mu, sd = mu_prior_sd)
+    
+    p_current <- likelihood_current * prior_current
+    p_proposal <- likelihood_proposal * prior_proposal
+    
+    # Accept proposal? (ratio cancels p(x))
+    p_accept <- p_proposal / p_current
+    
+    # Usually would include prior probability, which we neglect here for simplicity
+    accept <- runif(1) < p_accept
+    
+    if (plot && i%%10==0) {
+      plot_result <- plot_distribution(data, mu_current, mu_proposal, mu_prior_mu, mu_prior_sd, mu_true)
+      print(plot_result)
+    }
+
+    if (accept) {
+      # Update position
+      mu_current <- mu_proposal
+    } else {
+      mu_current <- mu_current
+    }
+    
+    posterior[[length(posterior) + 1]] <- mu_current
+  }
+  
+  posterior
+}
+```
+
+```{r echo=FALSE}
+# initialize variables
+data <- cars$speed
+mu_init <- mean(data) + runif(1)*3 #choose a good mu, otherwise it may get nan's and get stuck 
+proposal_width = .2
+mu_prior_mu = mean(data) # usually we wont have good estimate
+mu_prior_sd = 1.
+
+result <- sampler(data = data, samples = 100, mu_init = mu_init, proposal_width = proposal_width, plot = TRUE, mu_prior_mu = mu_prior_mu, mu_prior_sd = mu_prior_sd, mu_true = mean(data))
+```
