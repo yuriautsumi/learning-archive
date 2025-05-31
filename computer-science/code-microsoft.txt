@@ -1,0 +1,11 @@
+Chapter 14: Feedback and Flip-Flops
+-concept of flip-flop circuit and "memory"
+-it lets us maintain memory, giving us multiple stable states 
+-Example: Reset-Set (R-S) flip flop: composed of two NOR gates
+  -has property that output Q and Q bar are complements (restricts inputs)
+  -2 inputs can either Set or Reset output Q
+  -2 inputs can be both set to 0 to get last value of Q
+  -Diagram:
+   -|R  Q |-
+   -|S  Q'|-
+
