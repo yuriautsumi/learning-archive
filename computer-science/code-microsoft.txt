@@ -9,3 +9,17 @@ Chapter 14: Feedback and Flip-Flops
    -|R  Q |-
    -|S  Q'|-
 
+Chapter 22: The Operating System
+1. Keyboard: key press sends interrupt to microprocessor, which executes RST (restart) instruction. 
+-This saves current program on the stack, to jump to new address and starts keyboard handler. Initialization code sets position of cursor and sets to EI (enable interrupt) to enable response to keyboard input. 
+-Keyboard input causes jump from HLT (halt) of initialization code to keyboard handler, which determines key input with IN (Input) instruction, processes the key, then executes RET (return) to go back to HLT to await next input.
+-Keyboard scan code of keyboard handler maps key input to ASCII code, and writes it to video display memory at cursor position, *echoing* key to display. 
+-Then, cursor position increments. 
+
+UNIX: portable operating system, adapted to run on variety of computers
+-Developed in 1970s by Bell Labs, a subsidiary of AT&T (originally prohibited from marketing UNIX due to its monopoly on telephone industry) (Ken Thompson, Dennis Ritchie), comes from Multics (Multiplex Info and Computing) Operating System, co-developed by Bell Labs, MIT, and GE
+-Different versions of UNIX, used for *time-sharing* computer which is interfaced through multiple *terminals* (displays and keyboards). OS switches attention among the terminals.
+-*Multi-tasking OS* requires memory management, via virtual memory. 
+-Through Free Software Foundation (FSF) and GNU project, UNIX-compatible utilities and tools (e.g. Linux) developed. 
+
+*Note*: Some notions of this book don't assume compiler existance to compile higher level language to assembly. In this time, programs were read from *paper strips of assembly-level programs* (Example: PDP1105 mini-computer (Source: [Mainframes and the Unix Revolution - Computerphile](https://www.youtube.com/watch?v=-rPPqm44xLs))). 
